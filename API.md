@@ -26,6 +26,29 @@
 
 **Метод: Создание бронирования**
 
+```plantuml
+@startuml
+
+actor Client as c
+participant Server as s
+database Database as d
+
+c-> s: Забронировать
+s-> d: Запросить количество доступных слотов
+d-> s: Количество доступных слотов
+s-> s: Расчет слотов из запроса.\nСравнение запрашиваемых слотов с доступными
+
+alt Доступных слотов меньше, чем требуется
+    s-> c: 400. Ошибка: "Недостаточно доступных слотов"
+else Доступных слотов достаточно
+    s-> d: Забронировать
+    d -> s: Бронирование подтверждено
+    s-> c: 201 Путешествие успешно забронировано
+end
+
+@enduml
+```
+
 **Логика обработки:**
 1. Проверить, что указанное место назначения (`destination_id`) существует и имеет доступные слоты на выбранный период.
 
@@ -92,8 +115,8 @@ COMMIT TRANSACTION;
   "total_cost": 0.00
 }
 ```
-```Swagger```
-```
+**Swagger**
+```yaml
 openapi: "3.0.3"
 info:
   title: Создание нового бронирования путешествия во времени
@@ -155,7 +178,7 @@ paths:
         '201':
           description: Путешествие успешно забронировано
           content:
-            application/json:    
+            application/json:
               schema:
                 type: object
                 properties:
@@ -186,6 +209,19 @@ paths:
                     type: number
                     format: double
                     description: Общая стоимость бронирования
+        '400':
+          description: Недостаточно доступных слотов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "400"
+                  message:
+                    type: string
+                    example: "Недостаточно доступных слотов"
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -199,4 +235,6 @@ paths:
                   message:
                     type: string
                     example: "Произошла внутренняя ошибка сервера"
+
 ```
+
